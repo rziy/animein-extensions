@@ -8,6 +8,7 @@ const { MetadataService, norm } = require("./core/metadata");
 const { History } = require("./core/history");
 const { Presence } = require("./core/presence");
 const { SessionManager } = require("./core/manager");
+const { hostGuard, cors, requireHeader } = require("./core/guard");
 
 const cfg = loadConfig();
 const dataDir = path.resolve(cfg.dataDir);
@@ -24,17 +25,10 @@ const manager = new SessionManager({ config: cfg, presence, history, metadata })
 const app = express();
 app.disable("x-powered-by");
 
-// Anti DNS-rebinding: hanya terima request yang Host-nya localhost.
-app.use((req, res, next) => {
-  const host = String(req.headers.host || "").replace(/:\d+$/, "").toLowerCase();
-  if (host !== "127.0.0.1" && host !== "localhost") return res.status(403).end();
-  next();
-});
-// Semua POST/DELETE wajib header custom (memicu preflight CORS, jadi website lain gak bisa nembak).
-app.use((req, res, next) => {
-  if (req.method !== "GET" && req.get("X-AniPresence") !== "1") return res.status(403).json({ ok: false, error: "Missing header" });
-  next();
-});
+// Anti DNS-rebinding, CORS khusus extension, dan header wajib untuk POST/DELETE (lihat core/guard.js).
+app.use(hostGuard);
+app.use(cors);
+app.use(requireHeader);
 app.use(express.json({ limit: "16kb" }));
 
 app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "ui", "index.html")));
@@ -66,7 +60,7 @@ app.post("/stop", (req, res) => {
 });
 
 // ---- API dashboard / popup ----
-app.get("/api/status", (_req, res) => res.json({ ok: true, version: "0.4.0", ...manager.snapshot() }));
+app.get("/api/status", (_req, res) => res.json({ ok: true, version: "0.4.4", ...manager.snapshot() }));
 
 app.get("/api/history", (_req, res) => res.json({ ok: true, items: history.list(), stats: history.stats() }));
 
@@ -105,7 +99,7 @@ const expiry = setInterval(() => manager.tick(), 3000);
 expiry.unref();
 
 const server = app.listen(cfg.port, cfg.host, async () => {
-  console.log(`[AniPresence] v0.4.0 | Dashboard: http://${cfg.host}:${cfg.port}`);
+  console.log(`[AniPresence] v0.4.4 | Dashboard: http://${cfg.host}:${cfg.port}`);
   await presence.connect();
 });
 

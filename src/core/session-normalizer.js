@@ -12,7 +12,7 @@ function toWords(value) {
 }
 
 // Cari season/episode dari semua petunjuk (URL, judul tab, dst). Episode sampai 4 digit.
-function parseSeasonEpisode(...sources) {
+function parseWith(loose, sources) {
   let season = null;
   let episode = null;
   for (const raw of sources) {
@@ -27,7 +27,7 @@ function parseSeasonEpisode(...sources) {
     if (season == null) {
       const m = s.match(/\bseason\s*0?(\d{1,2})\b/i)
         || s.match(/\b(\d{1,2})(?:st|nd|rd|th)\s+season\b/i)
-        || s.match(/\bs\s*0?(\d{1,2})\b/i);
+        || (loose ? s.match(/\bs\s*0?(\d{1,2})\b/i) : null);
       if (m) season = Number(m[1]);
     }
     if (episode == null) {
@@ -38,6 +38,10 @@ function parseSeasonEpisode(...sources) {
   }
   return { season, episode };
 }
+
+const parseSeasonEpisode = (...sources) => parseWith(true, sources);
+// Untuk URL/judul tab: tanpa pola longgar "s2" yang gampang salah kena slug.
+const parseHint = (...sources) => parseWith(false, sources);
 
 // Teks yang SUDAH dipastikan label episode (dari tombol/heading/adapter), jadi boleh lebih longgar:
 // "E5", "S2:E5", "Ep. 5", "Episode 5", "#5", "5".
@@ -93,9 +97,9 @@ function normalizeSession(input = {}) {
     episode = meta.episode;
     // episodeText (isi halaman) paling depan: Animein itu SPA, URL/judul tab gak berubah per episode.
     const fromText = parseEpisodeText(input.episodeText);
-    const hinted = parseSeasonEpisode(
-      input.path, input.tabUrl, input.url, input.tabTitle,
-      input.pageTitle, input.ogTitle, input.referrer, input.title
+    // referrer sengaja gak dipakai: itu halaman SEBELUMNYA (bisa anime lain).
+    const hinted = parseHint(
+      input.path, input.tabUrl, input.url, input.tabTitle, input.pageTitle, input.ogTitle, input.title
     );
     season = fromText.season ?? season ?? hinted.season;
     episode = fromText.episode ?? episode ?? hinted.episode;

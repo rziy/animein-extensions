@@ -1,4 +1,4 @@
-# AniPresence v0.4.0
+# AniPresence v0.4.4
 
 Extension Brave/Chrome mendeteksi video yang lagi diputar, companion Node.js lokal mengirimnya ke Discord Rich Presence.
 Mendukung situs anime umum (Animein, Oploverz, Samehadaku, Anoboy), **Crunchyroll, Netflix, dan YouTube**.

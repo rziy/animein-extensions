@@ -1,13 +1,13 @@
 {
   "name": "anipresence",
-  "version": "0.4.0",
+  "version": "0.4.4",
   "private": true,
   "description": "Local companion for anime/video playback detection and Discord Rich Presence",
   "main": "src/main.js",
   "scripts": {
     "start": "node src/main.js",
     "test": "node --test",
-    "check": "node --check src/main.js && node --check src/core/config.js && node --check src/core/store.js && node --check src/core/session-normalizer.js && node --check src/core/metadata.js && node --check src/core/history.js && node --check src/core/presence.js && node --check src/core/manager.js"
+    "check": "node --check src/main.js && node --check src/core/config.js && node --check src/core/store.js && node --check src/core/session-normalizer.js && node --check src/core/metadata.js && node --check src/core/history.js && node --check src/core/presence.js && node --check src/core/manager.js && node --check src/core/guard.js"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

@@ -148,3 +148,31 @@ test("History: hitung waktu nonton & stats", () => {
   assert.equal(h.stats(1_010_000).totalSeconds, 5);
   assert.equal(h.list().length, 1);
 });
+
+test("season tidak bocor dari referrer atau slug URL", () => {
+  const s = normalizeSession({ ...base, title: "Seihantai na Kimi to Boku", episodeText: "Episode 1",
+    referrer: "https://animein.net/black-clover-season-2-episode-1", path: "/watch/seihantai-s2-x" });
+  assert.equal(s.season, null); assert.equal(s.episode, 1);
+  assert.equal(normalizeSession({ ...base, title: "Re Zero S2", episodeText: "Episode 1" }).season, 2);
+});
+
+test("guard: preflight extension lolos, website lain ditolak, POST butuh header", () => {
+  const { hostGuard, cors, requireHeader } = require("../src/core/guard");
+  const mkRes = () => { const r = { h: {}, code: null, setHeader(k, v) { r.h[k] = v; }, status(c) { r.code = c; return r; }, end() { r.ended = true; return r; }, json() { r.ended = true; return r; } }; return r; };
+  const run = (mw, req) => { const res = mkRes(); let nexted = false; mw({ get: k => req.headers?.[k.toLowerCase()], ...req }, res, () => { nexted = true; }); return { res, nexted }; };
+
+  let r = run(cors, { method: "OPTIONS", headers: { origin: "chrome-extension://abcdef" } });
+  assert.equal(r.res.code, 204); assert.equal(r.res.h["Access-Control-Allow-Origin"], "chrome-extension://abcdef");
+  assert.match(r.res.h["Access-Control-Allow-Headers"], /X-AniPresence/);
+  r = run(cors, { method: "GET", headers: { origin: "chrome-extension://abcdef" } });
+  assert.ok(r.nexted && r.res.h["Access-Control-Allow-Origin"]);
+  r = run(cors, { method: "OPTIONS", headers: { origin: "https://evil.example" } });
+  assert.equal(r.res.code, 403);
+  r = run(cors, { method: "POST", headers: { origin: "https://evil.example" } });
+  assert.ok(r.nexted && !r.res.h["Access-Control-Allow-Origin"]);
+
+  assert.equal(run(requireHeader, { method: "POST", headers: {} }).res.code, 403);
+  assert.ok(run(requireHeader, { method: "POST", headers: { "x-anipresence": "1" } }).nexted);
+  assert.equal(run(hostGuard, { headers: { host: "evil.example" } }).res.code, 403);
+  assert.ok(run(hostGuard, { headers: { host: "127.0.0.1:32145" } }).nexted);
+});
