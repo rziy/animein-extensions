@@ -1,0 +1,7 @@
+node_modules/
+.env
+*.log
+data/history.json
+data/settings.json
+data/overrides.json
+data/*.tmp

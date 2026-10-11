@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AniPresence</title>
+<style>
+:root{--bg:#0f0f14;--panel:#1a1a23;--panel2:#22222e;--text:#f1f1f5;--mute:#9a9aab;--accent:#ff7a3d;--ok:#3ddc84;--warn:#f5a524}
+@media (prefers-color-scheme:light){:root{--bg:#f4f4f8;--panel:#fff;--panel2:#ececf3;--text:#16161d;--mute:#6a6a7a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:20px}
+header{display:flex;align-items:center;gap:12px;margin-bottom:18px}header h1{font-size:20px;margin:0}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;background:var(--panel);font-size:12px;color:var(--mute)}
+.dot{width:8px;height:8px;border-radius:50%;background:#777}.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}
+.sw{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--mute)}
+.hero{position:relative;overflow:hidden;border-radius:16px;background:var(--panel);min-height:180px;display:flex;gap:18px;padding:18px;margin-bottom:20px}
+.hero .bg{position:absolute;inset:0;background:center/cover;filter:blur(30px) brightness(.45);transform:scale(1.2);opacity:.9}
+.hero>*{position:relative}.poster{width:104px;height:148px;border-radius:10px;background:var(--panel2) center/cover;flex:none;box-shadow:0 8px 24px #0006}
+.info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;color:#fff}
+.info .label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.7}.info h2{margin:4px 0;font-size:22px}
+.info .sub{opacity:.85}.bar{height:5px;border-radius:9px;background:#fff3;margin-top:14px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
+.time{display:flex;justify-content:space-between;font-size:12px;opacity:.75;margin-top:6px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+.tile{background:var(--panel);border-radius:12px;padding:14px}.tile b{display:block;font-size:20px}.tile span{color:var(--mute);font-size:12px}
+h3{margin:0 0 10px;font-size:15px;display:flex;align-items:center}h3 button{margin-left:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.card{background:var(--panel);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.card .img{aspect-ratio:2/3;background:var(--panel2) center/cover;position:relative}.card .img .badge{position:absolute;top:6px;left:6px;background:#000a;color:#fff;font-size:11px;padding:2px 7px;border-radius:99px}
+.card .body{padding:9px 10px 10px}.card .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card .s{color:var(--mute);font-size:12px;margin-top:2px}
+.card .bar{background:var(--panel2);margin-top:8px}.card .acts{display:flex;gap:6px;margin-top:8px}
+a.go{color:inherit;text-decoration:none}
+button{background:var(--panel2);color:var(--text);border:0;border-radius:8px;padding:5px 10px;font:inherit;font-size:12px;cursor:pointer}button:hover{filter:brightness(1.2)}
+input[type=checkbox]{width:38px;height:22px;appearance:none;background:#555;border-radius:99px;position:relative;cursor:pointer;transition:.2s}
+input[type=checkbox]::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}
+input[type=checkbox]:checked{background:var(--ok)}input[type=checkbox]:checked::after{left:19px}
+dialog{border:0;border-radius:14px;background:var(--panel);color:var(--text);padding:18px;width:min(420px,92vw)}dialog::backdrop{background:#000a}
+dialog label{display:block;margin:10px 0 4px;color:var(--mute);font-size:12px}dialog input[type=text]{width:100%;padding:8px;border-radius:8px;border:1px solid var(--panel2);background:var(--bg);color:var(--text)}
+dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}.hint{color:var(--mute);font-size:12px;margin-top:6px}
+.empty{color:var(--mute);padding:24px;text-align:center;background:var(--panel);border-radius:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>AniPresence</h1>
+    <span class="pill"><i class="dot" id="dot"></i><span id="dtext">memuat…</span></span>
+    <label class="sw">Bagikan ke Discord <input type="checkbox" id="enabled"></label>
+  </header>
+
+  <section class="hero" id="hero">
+    <div class="bg" id="hbg"></div>
+    <div class="poster" id="hposter"></div>
+    <div class="info">
+      <div class="label" id="hlabel">Sedang ditonton</div>
+      <h2 id="htitle">Belum ada yang diputar</h2>
+      <div class="sub" id="hsub">Putar video di browser, nanti muncul di sini.</div>
+      <div class="bar"><i id="hbar" style="width:0"></i></div>
+      <div class="time"><span id="hcur"></span><span id="hdur"></span></div>
+    </div>
+  </section>
+
+  <section class="tiles">
+    <div class="tile"><b id="sToday">-</b><span>Hari ini</span></div>
+    <div class="tile"><b id="sWeek">-</b><span>7 hari terakhir</span></div>
+    <div class="tile"><b id="sTotal">-</b><span>Total nonton</span></div>
+    <div class="tile"><b id="sTitles">-</b><span>Judul ditonton</span></div>
+  </section>
+
+  <h3>Lanjut nonton <button id="clear">Hapus semua</button></h3>
+  <div class="grid" id="grid"></div>
+</div>
+
+<dialog id="dlg">
+  <h3 id="dtitle">Perbaiki cover</h3>
+  <div class="hint">Isi salah satu. Disimpan di <code>data/overrides.json</code>, berlaku untuk judul ini.</div>
+  <label>Cari dengan judul lain</label><input type="text" id="fSearch" placeholder="mis. Tokyo Revengers: Tenjiku-hen">
+  <label>ID AniList (paling akurat)</label><input type="text" id="fId" placeholder="mis. 163134">
+  <label>URL cover sendiri (https)</label><input type="text" id="fCover" placeholder="https://…">
+  <div class="row"><button id="fCancel">Batal</button><button id="fSave" style="background:var(--accent);color:#fff">Simpan</button></div>
+</dialog>
+
+<script>
+const $ = id => document.getElementById(id);
+const H = { "Content-Type": "application/json", "X-AniPresence": "1" };
+const fmt = s => { s = Math.max(0, Math.round(s || 0)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  return h ? `${h}:${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}` : `${m}:${String(x).padStart(2,"0")}`; };
+const dur = s => { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? `${h}j ${m}m` : `${m}m`; };
+const bg = (el, url) => { let v = ""; try { v = url ? `url("${new URL(url).href}")` : ""; } catch {} el.style.backgroundImage = v; };
+const label = x => [x.season && `Season ${x.season}`, x.episode && `Episode ${x.episode}`].filter(Boolean).join(" · ");
+let target = null, editing = false;
+
+async function status() {
+  try {
+    const s = await (await fetch("/api/status", { cache: "no-store" })).json();
+    $("dot").className = "dot " + (s.connected ? "ok" : "warn");
+    $("dtext").textContent = s.connected ? "Discord tersambung" : "Discord belum tersambung";
+    $("enabled").checked = s.enabled;
+    const x = s.session;
+    $("htitle").textContent = x ? x.displayTitle : "Belum ada yang diputar";
+    $("hsub").textContent = x ? [x.site, label(x), x.episodeTitle, x.channel, x.paused && "Paused"].filter(Boolean).join(" · ")
+      : "Putar video di browser, nanti muncul di sini.";
+    $("hlabel").textContent = x ? (x.paused ? "Dijeda" : "Sedang ditonton") : "Sedang ditonton";
+    bg($("hposter"), x?.cover); bg($("hbg"), x?.cover);
+    $("hbar").style.width = x?.duration ? `${Math.min(100, x.position / x.duration * 100)}%` : "0";
+    $("hcur").textContent = x ? fmt(x.position) : "";
+    $("hdur").textContent = x?.duration ? fmt(x.duration) : "";
+  } catch { $("dtext").textContent = "companion mati"; $("dot").className = "dot"; }
+}
+
+async function library() {
+  if (editing) return;
+  const r = await (await fetch("/api/history", { cache: "no-store" })).json();
+  $("sToday").textContent = dur(r.stats.todaySeconds);
+  $("sWeek").textContent = dur(r.stats.weekSeconds);
+  $("sTotal").textContent = dur(r.stats.totalSeconds);
+  $("sTitles").textContent = r.stats.titles;
+  const grid = $("grid");
+  grid.replaceChildren();
+  if (!r.items.length) { const d = document.createElement("div"); d.className = "empty"; d.textContent = "Riwayat masih kosong."; grid.append(d); return; }
+  for (const e of r.items.slice(0, 40)) {
+    const c = document.createElement("div"); c.className = "card";
+    const img = document.createElement("a"); img.className = "img go"; bg(img, e.cover);
+    if (/^https?:\/\//.test(e.url || "")) { img.href = e.url; img.target = "_blank"; img.rel = "noopener"; }
+    const badge = document.createElement("span"); badge.className = "badge"; badge.textContent = e.completed ? "Selesai" : e.site; img.append(badge);
+    const body = document.createElement("div"); body.className = "body";
+    const t = document.createElement("div"); t.className = "t"; t.textContent = e.title; t.title = e.title;
+    const s = document.createElement("div"); s.className = "s"; s.textContent = [label(e), e.channel].filter(Boolean).join(" · ") || e.site;
+    const bar = document.createElement("div"); bar.className = "bar"; const i = document.createElement("i");
+    i.style.width = e.duration ? `${Math.min(100, e.position / e.duration * 100)}%` : "0"; bar.append(i);
+    const acts = document.createElement("div"); acts.className = "acts";
+    if (e.kind !== "video") { const f = document.createElement("button"); f.textContent = "Fix cover"; f.onclick = () => openFix(e); acts.append(f); }
+    const d = document.createElement("button"); d.textContent = "Hapus"; d.onclick = async () => { await fetch(`/api/history/${e.id}`, { method: "DELETE", headers: H }); library(); };
+    acts.append(d);
+    body.append(t, s, bar, acts); c.append(img, body); grid.append(c);
+  }
+}
+
+function openFix(e) { target = e; editing = true; $("dtitle").textContent = `Perbaiki cover: ${e.title}`; for (const k of ["fSearch","fId","fCover"]) $(k).value = ""; $("dlg").showModal(); }
+$("fCancel").onclick = () => { $("dlg").close(); };
+$("dlg").addEventListener("close", () => { editing = false; });
+$("fSave").onclick = async () => {
+  await fetch("/api/override", { method: "POST", headers: H, body: JSON.stringify({ title: target.title, search: $("fSearch").value, anilistId: $("fId").value, cover: $("fCover").value }) });
+  $("dlg").close(); setTimeout(() => { status(); library(); }, 1500);
+};
+$("enabled").onchange = async e => { await fetch("/api/enabled", { method: "POST", headers: H, body: JSON.stringify({ enabled: e.target.checked }) }); status(); };
+$("clear").onclick = async () => { if (confirm("Hapus semua riwayat?")) { await fetch("/api/history", { method: "DELETE", headers: H }); library(); } };
+
+status(); library();
+setInterval(status, 1500); setInterval(library, 10000);
+</script>
+</body>
+</html>
